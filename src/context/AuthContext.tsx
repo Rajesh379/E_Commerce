@@ -82,13 +82,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const token = getStoredToken();
+    if (token?.startsWith('static-') || window.location.hostname.endsWith('github.io')) {
+      return;
+    }
+
     let closed = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
     const connect = () => {
       if (closed) return;
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const token = getStoredToken();
       const qs = token ? `?token=${encodeURIComponent(token)}` : '';
       const ws = new WebSocket(`${proto}//${window.location.host}/ws${qs}`);
       wsRef.current = ws;

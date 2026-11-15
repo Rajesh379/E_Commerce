@@ -1,3 +1,5 @@
+import { handleStaticFallbackRequest } from './staticFallbackStore';
+
 const TOKEN_STORAGE_KEY = 'eworkers_bearer_token';
 
 export function getStoredToken(): string | null {
@@ -32,23 +34,34 @@ export async function apiRequest<T = any>(
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  const res = await fetch(url, {
-    ...options,
-    credentials: 'include',
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      credentials: 'include',
+      headers,
+    });
+  } catch {
+    return handleStaticFallbackRequest<T>(url, options);
+  }
 
   const contentType = res.headers.get('content-type') || '';
+
+  // If served from a static-only host (e.g. GitHub Pages) where Express /api/* is absent,
+  // static servers return HTML 404 (GET) or 405/501 (POST/PATCH/PUT/DELETE).
+  // Fall back seamlessly to persistent browser storage so all app workflows remain functional.
+  if (
+    (res.status === 404 || res.status === 405 || res.status === 501) &&
+    !contentType.includes('application/json')
+  ) {
+    return handleStaticFallbackRequest<T>(url, options);
+  }
+
   const data = contentType.includes('application/json')
     ? await res.json().catch(() => ({}))
     : {};
 
   if (!res.ok) {
-    if (res.status === 404 && !contentType.includes('application/json')) {
-      throw new Error(
-        'Backend API server is unreachable (404). Make sure the Express server (npm start) is running rather than static-only hosting.'
-      );
-    }
     throw new Error(data?.error || `Request failed (${res.status})`);
   }
   return data as T;

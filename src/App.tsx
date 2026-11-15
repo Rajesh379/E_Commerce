@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { HomePage } from './pages/HomePage';
@@ -16,10 +16,15 @@ import { CustomerDashboard } from './pages/CustomerDashboard';
 import { WorkerDashboard } from './pages/WorkerDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 
+const isGitHubPages =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+
 export default function App() {
+  const Router = isGitHubPages ? HashRouter : BrowserRouter;
+
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/workers" element={<WorkersDirectoryPage />} />
@@ -57,7 +62,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+      </Router>
     </AuthProvider>
   );
 }
