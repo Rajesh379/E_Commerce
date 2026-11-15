@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { apiRequest } from '../lib/api';
+import { apiRequest, getStoredToken, setStoredToken } from '../lib/api';
 import { isRtl, TRANSLATIONS } from '../i18n/translations';
 import type { Lang, User, WorkerProfile } from '../types';
 
@@ -88,7 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const connect = () => {
       if (closed) return;
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${proto}//${window.location.host}/ws`);
+      const token = getStoredToken();
+      const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+      const ws = new WebSocket(`${proto}//${window.location.host}/ws${qs}`);
       wsRef.current = ws;
 
       ws.onmessage = (event) => {
@@ -149,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     await apiRequest('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    setStoredToken(null);
     setUser(null);
     setWorkerProfile(null);
     setUnreadNotifications(0);

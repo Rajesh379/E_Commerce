@@ -4,7 +4,7 @@ import { CheckCircle2, UserPlus } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { LanguageBar } from '../components/LanguageBar';
 import { useAuth } from '../context/AuthContext';
-import { apiRequest } from '../lib/api';
+import { apiRequest, setStoredToken } from '../lib/api';
 import { AREAS_BY_CITY, CITIES, SERVICE_CATEGORIES } from '../i18n/translations';
 import type { City, User, WorkerProfile } from '../types';
 
@@ -38,6 +38,7 @@ export function RegisterPage() {
       const res = await apiRequest<{
         user: User;
         workerProfile: WorkerProfile | null;
+        token?: string;
         otpPreview: string;
       }>('/api/auth/register', {
         method: 'POST',
@@ -53,6 +54,7 @@ export function RegisterPage() {
           preferred_lang: lang,
         }),
       });
+      if (res.token) setStoredToken(res.token);
       setSessionData(res.user, res.workerProfile);
       setOtpPreview(res.otpPreview);
       setOtpStep(true);

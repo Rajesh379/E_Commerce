@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { LanguageBar } from '../components/LanguageBar';
 import { useAuth } from '../context/AuthContext';
-import { apiRequest } from '../lib/api';
+import { apiRequest, setStoredToken } from '../lib/api';
 import type { User, WorkerProfile } from '../types';
 
 export function LoginPage() {
@@ -22,13 +22,14 @@ export function LoginPage() {
     setBusy(true);
     setError('');
     try {
-      const res = await apiRequest<{ user: User; workerProfile: WorkerProfile | null }>(
+      const res = await apiRequest<{ user: User; workerProfile: WorkerProfile | null; token?: string }>(
         '/api/auth/login',
         {
           method: 'POST',
           body: JSON.stringify({ identifier, password }),
         }
       );
+      if (res.token) setStoredToken(res.token);
       setSessionData(res.user, res.workerProfile);
       if (res.user.role === 'admin') navigate('/dashboard/admin');
       else if (res.user.role === 'worker') navigate('/dashboard/worker');

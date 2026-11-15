@@ -11,13 +11,13 @@ import {
   recalculateWorkerRating,
 } from './db.ts';
 import {
-  AuthenticatedRequest,
+  type AuthenticatedRequest,
   clearAuthCookie,
   requireAuth,
   requireRole,
   setAuthCookie,
   signAuthToken,
-  UserRole,
+  type UserRole,
 } from './auth.ts';
 import { emitToAdmins, emitToUser } from './realtime.ts';
 
@@ -158,7 +158,7 @@ export function createApiRouter() {
       ).run(otpId, userId, normalizedPhone, otpCode);
 
       const token = signAuthToken({ userId, role: selectedRole, email: normalizedEmail });
-      setAuthCookie(res, token);
+      setAuthCookie(res, token, req);
 
       const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
       const workerProfile = selectedRole === 'worker'
@@ -168,6 +168,7 @@ export function createApiRouter() {
       res.status(201).json({
         user: sanitizeUser(user),
         workerProfile,
+        token,
         otpPreview: otpCode,
       });
     } catch (err: any) {
@@ -204,7 +205,7 @@ export function createApiRouter() {
       }
 
       const token = signAuthToken({ userId: user.id, role: user.role, email: user.email });
-      setAuthCookie(res, token);
+      setAuthCookie(res, token, req);
 
       const workerProfile = user.role === 'worker'
         ? db.prepare('SELECT * FROM worker_profiles WHERE user_id = ?').get(user.id)
@@ -213,21 +214,22 @@ export function createApiRouter() {
       res.json({
         user: sanitizeUser(user),
         workerProfile,
+        token,
       });
     } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Login failed' });
     }
   });
 
-  router.post('/auth/logout', (_req, res) => {
-    clearAuthCookie(res);
+  router.post('/auth/logout', (req, res) => {
+    clearAuthCookie(res, req);
     res.json({ ok: true });
   });
 
   router.get('/auth/me', requireAuth, (req: AuthenticatedRequest, res) => {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.auth!.userId) as any;
     if (!user || !user.is_active) {
-      clearAuthCookie(res);
+      clearAuthCookie(res, req);
       res.status(401).json({ error: 'Session no longer valid' });
       return;
     }
@@ -1366,6 +1368,10 @@ export function createApiRouter() {
 
     const updated = db.prepare('SELECT * FROM complaints WHERE id = ?').get(complaint.id);
     res.json({ complaint: updated });
+  });
+
+  router.use((_req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
   });
 
   return router;

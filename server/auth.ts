@@ -61,18 +61,28 @@ export function extractTokenFromRequest(req: Request): string | null {
   return null;
 }
 
-export function setAuthCookie(res: Response, token: string): void {
+export function setAuthCookie(res: Response, token: string, req?: Request): void {
+  const isHttps = Boolean(
+    req?.secure || req?.headers['x-forwarded-proto'] === 'https'
+  );
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: isHttps ? 'none' : 'lax',
+    secure: isHttps,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   });
 }
 
-export function clearAuthCookie(res: Response): void {
-  res.clearCookie(COOKIE_NAME, { path: '/' });
+export function clearAuthCookie(res: Response, req?: Request): void {
+  const isHttps = Boolean(
+    req?.secure || req?.headers['x-forwarded-proto'] === 'https'
+  );
+  res.clearCookie(COOKIE_NAME, {
+    path: '/',
+    sameSite: isHttps ? 'none' : 'lax',
+    secure: isHttps,
+  });
 }
 
 export function requireAuth(
