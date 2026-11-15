@@ -387,11 +387,20 @@ export function createApiRouter() {
   // ==========================================
   // STORAGE & FILE UPLOAD ROUTES (RLS-GATED)
   // ==========================================
+  const persistUploadedFile = (kind: 'avatar' | 'cnic', file: Express.Multer.File, ownerUserId: string) => {
+    const data = fs.readFileSync(file.path);
+    db.prepare(
+      `INSERT OR REPLACE INTO uploaded_files (id, kind, filename, mime_type, data, owner_user_id)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).run(crypto.randomUUID(), kind, file.filename, file.mimetype || 'image/jpeg', data, ownerUserId);
+  };
+
   router.post('/uploads/avatar', requireAuth, uploadAvatar.single('avatar'), (req: AuthenticatedRequest, res) => {
     if (!req.file) {
       res.status(400).json({ error: 'Please select an image file (JPG, PNG, WebP).' });
       return;
     }
+    persistUploadedFile('avatar', req.file, req.auth!.userId);
     const avatarUrl = `/api/files/avatar/${req.file.filename}`;
     db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(avatarUrl, req.auth!.userId);
     res.json({ avatarUrl });
@@ -400,11 +409,18 @@ export function createApiRouter() {
   router.get('/files/avatar/:filename', (req, res) => {
     const safeName = path.basename(req.params.filename);
     const fullPath = path.join(AVATARS_DIR, safeName);
-    if (!fs.existsSync(fullPath)) {
+    if (fs.existsSync(fullPath)) {
+      res.sendFile(fullPath);
+      return;
+    }
+    const row = db
+      .prepare("SELECT mime_type, data FROM uploaded_files WHERE filename = ? AND kind = 'avatar'")
+      .get(safeName) as { mime_type: string; data: Buffer } | undefined;
+    if (!row) {
       res.status(404).json({ error: 'Avatar not found' });
       return;
     }
-    res.sendFile(fullPath);
+    res.contentType(row.mime_type).send(row.data);
   });
 
   router.post(
@@ -432,6 +448,9 @@ export function createApiRouter() {
 
       const frontFile = files?.cnicFront?.[0];
       const backFile = files?.cnicBack?.[0];
+
+      if (frontFile) persistUploadedFile('cnic', frontFile, req.auth!.userId);
+      if (backFile) persistUploadedFile('cnic', backFile, req.auth!.userId);
 
       const frontUrl = frontFile ? `/api/files/cnic/${frontFile.filename}` : worker.cnic_front_url;
       const backUrl = backFile ? `/api/files/cnic/${backFile.filename}` : worker.cnic_back_url;
@@ -467,11 +486,6 @@ export function createApiRouter() {
   // Strict RBAC on CNIC files: only owning worker or admin
   router.get('/files/cnic/:filename', requireAuth, (req: AuthenticatedRequest, res) => {
     const safeName = path.basename(req.params.filename);
-    const fullPath = path.join(CNIC_DIR, safeName);
-    if (!fs.existsSync(fullPath)) {
-      res.status(404).json({ error: 'Document not found' });
-      return;
-    }
 
     if (req.auth!.role !== 'admin') {
       const targetUrl = `/api/files/cnic/${safeName}`;
@@ -485,7 +499,20 @@ export function createApiRouter() {
       }
     }
 
-    res.sendFile(fullPath);
+    const fullPath = path.join(CNIC_DIR, safeName);
+    if (fs.existsSync(fullPath)) {
+      res.sendFile(fullPath);
+      return;
+    }
+
+    const row = db
+      .prepare("SELECT mime_type, data FROM uploaded_files WHERE filename = ? AND kind = 'cnic'")
+      .get(safeName) as { mime_type: string; data: Buffer } | undefined;
+    if (!row) {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+    res.contentType(row.mime_type).send(row.data);
   });
 
   // ==========================================

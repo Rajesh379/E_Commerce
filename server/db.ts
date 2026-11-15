@@ -153,7 +153,21 @@ export function initializeDatabase(): void {
       is_read INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL CHECK (kind IN ('avatar', 'cnic')),
+      filename TEXT NOT NULL UNIQUE,
+      mime_type TEXT NOT NULL,
+      data BLOB NOT NULL,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
+
+  db.prepare(
+    `UPDATE users SET avatar_url = REPLACE(avatar_url, '/src/assets/images/', '/images/') WHERE avatar_url LIKE '/src/assets/images/%'`
+  ).run();
 
   seedInitialData();
 }
@@ -222,7 +236,7 @@ function seedInitialData(): void {
       name: 'Tariq Mahmood Soomro',
       city: 'Hyderabad',
       area: 'Qasimabad',
-      avatar: '/src/assets/images/avatar_worker_tariq_1794725970437.jpg',
+      avatar: '/images/avatar_worker_tariq_1794725970437.jpg',
       category: 'Electrician',
       exp: 9,
       areasCovered: 'Qasimabad, Latifabad Unit 1-12, Autobhan Road',
@@ -244,7 +258,7 @@ function seedInitialData(): void {
       name: 'Sajid Hussain Khoso',
       city: 'Hyderabad',
       area: 'Latifabad Unit 7',
-      avatar: '/src/assets/images/avatar_worker_sajid_1794725970879.jpg',
+      avatar: '/images/avatar_worker_sajid_1794725970879.jpg',
       category: 'Plumber',
       exp: 11,
       areasCovered: 'Latifabad, Saddar, Citizen Colony, Heerabad',
@@ -266,7 +280,7 @@ function seedInitialData(): void {
       name: 'Bilal Ahmed Qazi',
       city: 'Jamshoro',
       area: 'Sindh University Society',
-      avatar: '/src/assets/images/avatar_worker_bilal_1794725971385.jpg',
+      avatar: '/images/avatar_worker_bilal_1794725971385.jpg',
       category: 'AC & HVAC',
       exp: 6,
       areasCovered: 'Jamshoro, MUET, LUMHS, Kotri, Qasimabad',
@@ -288,7 +302,7 @@ function seedInitialData(): void {
       name: 'Kamran Ali Chandio',
       city: 'Hyderabad',
       area: 'Autobhan Road',
-      avatar: '/src/assets/images/avatar_worker_kamran_1794725971263.jpg',
+      avatar: '/images/avatar_worker_kamran_1794725971263.jpg',
       category: 'Carpenter',
       exp: 8,
       areasCovered: 'Autobhan Road, Defence, Qasimabad, Latifabad',
@@ -309,7 +323,7 @@ function seedInitialData(): void {
       name: 'Noman Raza Talpur',
       city: 'Jamshoro',
       area: 'Kotri Site & LUMHS',
-      avatar: '/src/assets/images/avatar_worker_tariq_1794725970437.jpg',
+      avatar: '/images/avatar_worker_tariq_1794725970437.jpg',
       category: 'Solar & UPS',
       exp: 7,
       areasCovered: 'Jamshoro, Kotri, Petaro, Qasimabad',
@@ -330,7 +344,7 @@ function seedInitialData(): void {
       name: 'Imran Palli',
       city: 'Hyderabad',
       area: 'Saddar',
-      avatar: '/src/assets/images/avatar_worker_kamran_1794725971263.jpg',
+      avatar: '/images/avatar_worker_kamran_1794725971263.jpg',
       category: 'Painter',
       exp: 5,
       areasCovered: 'Saddar, Hirabad, GOR Colony, Latifabad',

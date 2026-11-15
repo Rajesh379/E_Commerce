@@ -11,13 +11,17 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { LanguageBar } from '../components/LanguageBar';
+import { SafeAvatar } from '../components/SafeImage';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../lib/api';
 import { CITIES, SERVICE_CATEGORIES } from '../i18n/translations';
 import type { WorkerProfile } from '../types';
 
-const HERO_IMAGE = '/src/assets/images/hero_eworkers_craftsmen_1794725969639.jpg';
-const TOOLS_IMAGE = '/src/assets/images/service_tools_showcase_1794725969745.jpg';
+import heroImage from '../assets/images/hero_eworkers_craftsmen_1794725969639.jpg';
+import toolsImage from '../assets/images/service_tools_showcase_1794725969745.jpg';
+
+const HERO_IMAGE = heroImage;
+const TOOLS_IMAGE = toolsImage;
 
 export function HomePage() {
   const { t, user } = useAuth();
@@ -244,18 +248,7 @@ export function HomePage() {
                   >
                     <div>
                       <div className="flex items-center gap-3.5">
-                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-[#0B1F3A] flex items-center justify-center text-white font-display font-bold">
-                          {worker.avatar_url ? (
-                            <img
-                              src={worker.avatar_url}
-                              alt={worker.full_name}
-                              referrerPolicy="no-referrer"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span>{worker.full_name?.slice(0, 2).toUpperCase()}</span>
-                          )}
-                        </div>
+                        <SafeAvatar src={worker.avatar_url} name={worker.full_name} className="h-14 w-14 rounded-xl" />
                         <div className="min-w-0">
                           <h3 className="font-display text-base font-semibold text-[#0B1F3A] truncate group-hover:text-[#0D9488]">
                             {worker.full_name}

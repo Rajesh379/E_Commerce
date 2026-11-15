@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
+import { SafeAvatar } from '../components/SafeImage';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../lib/api';
 import { CITIES } from '../i18n/translations';
@@ -118,18 +119,7 @@ export function WorkerProfilePage() {
             <div className="lg:col-span-7 space-y-6">
               <div className="rounded-xl border border-slate-200 bg-white p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-[#0B1F3A] flex items-center justify-center text-white font-display text-xl font-bold">
-                    {worker.avatar_url ? (
-                      <img
-                        src={worker.avatar_url}
-                        alt={worker.full_name}
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span>{worker.full_name?.slice(0, 2).toUpperCase()}</span>
-                    )}
-                  </div>
+                  <SafeAvatar src={worker.avatar_url} name={worker.full_name} className="h-20 w-20 rounded-2xl text-xl" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <h1 className="font-display text-2xl font-bold text-[#0B1F3A]">

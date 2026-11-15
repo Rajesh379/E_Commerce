@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { MapPin, Search, ShieldCheck, Star } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { LanguageBar } from '../components/LanguageBar';
+import { SafeAvatar } from '../components/SafeImage';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../lib/api';
 import { CITIES, SERVICE_CATEGORIES } from '../i18n/translations';
@@ -205,18 +206,7 @@ export function WorkersDirectoryPage() {
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-[#0B1F3A] flex items-center justify-center text-white font-display font-bold">
-                        {worker.avatar_url ? (
-                          <img
-                            src={worker.avatar_url}
-                            alt={worker.full_name}
-                            referrerPolicy="no-referrer"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span>{worker.full_name?.slice(0, 2).toUpperCase()}</span>
-                        )}
-                      </div>
+                      <SafeAvatar src={worker.avatar_url} name={worker.full_name} className="h-14 w-14 rounded-xl" />
                       <div className="min-w-0">
                         <h2 className="font-display text-base font-bold text-[#0B1F3A] truncate">
                           {worker.full_name}
