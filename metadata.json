@@ -1,0 +1,6 @@
+{
+  "name": "E Workers",
+  "description": "Local services marketplace connecting verified electricians, plumbers, AC technicians, and craftsmen across Hyderabad and Jamshoro, Pakistan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
